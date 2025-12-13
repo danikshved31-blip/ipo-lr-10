@@ -1,3 +1,7 @@
+class RectCorrectError(Exception):
+    """Пользовательское исключение для некорректных прямоугольников"""
+    pass
+
 def isCorrectRect(points):
     if len(points) != 2:
         return False
@@ -81,3 +85,89 @@ def intersectionAreaRect(points1, points2):
             
     except ValueError as e:
         raise ValueError(f"Некорректные данные: {e}")
+
+def intersectionAreawultiRect(rectangles):
+
+    if not rectangles:
+        return 0
+    
+    if not isinstance(rectangles, list):
+        raise RectCorrectError("Аргумент должен быть списком прямоугольников")
+
+    if len(rectangles) == 1:
+        rect = rectangles[0]
+        if (not isinstance(rect, list) or len(rect) != 2 or 
+            not isinstance(rect[0], tuple) or not isinstance(rect[1], tuple) or
+            len(rect[0]) != 2 or len(rect[1]) != 2):
+            raise RectCorrectError("Прямоугольник должен быть списком из двух кортежей по два числа")
+        
+        (x1, y1), (x2, y2) = rect
+
+        for coord in (x1, y1, x2, y2):
+            if not isinstance(coord, (int, float)):
+                raise RectCorrectError("Координаты должны быть числами")
+
+        if x1 >= x2 or y1 >= y2:
+            raise RectCorrectError("Прямоугольник некорректен: левая граница должна быть меньше правой, нижняя меньше верхней")
+        
+        return (x2 - x1) * (y2 - y1)
+
+    try:
+        first_rect = rectangles[0]
+        if (not isinstance(first_rect, list) or len(first_rect) != 2 or 
+            not isinstance(first_rect[0], tuple) or not isinstance(first_rect[1], tuple)):
+            raise RectCorrectError("Каждый прямоугольник должен быть списком из двух кортежей")
+        
+        (x1, y1), (x2, y2) = first_rect
+        
+        for coord in (x1, y1, x2, y2):
+            if not isinstance(coord, (int, float)):
+                raise RectCorrectError("Координаты должны быть числами")
+        
+        if x1 >= x2 or y1 >= y2:
+            raise RectCorrectError("Первый прямоугольник некорректен")
+        
+        current_x_left = x1
+        current_x_right = x2
+        current_y_bottom = y1
+        current_y_top = y2
+        
+        for i in range(1, len(rectangles)):
+            rect = rectangles[i]
+            
+            if (not isinstance(rect, list) or len(rect) != 2 or 
+                not isinstance(rect[0], tuple) or not isinstance(rect[1], tuple) or
+                len(rect[0]) != 2 or len(rect[1]) != 2):
+                raise RectCorrectError(f"Прямоугольник {i} должен быть списком из двух кортежей по два числа")
+            
+            (x3, y3), (x4, y4) = rect
+            
+            for coord in (x3, y3, x4, y4):
+                if not isinstance(coord, (int, float)):
+                    raise RectCorrectError(f"Прямоугольник {i}: координаты должны быть числами")
+            
+            if x3 >= x4 or y3 >= y4:
+                raise RectCorrectError(f"Прямоугольник {i} некорректен: левая граница должна быть меньше правой, нижняя меньше верхней")
+            
+            x_left = max(current_x_left, x3)
+            x_right = min(current_x_right, x4)
+            y_bottom = max(current_y_bottom, y3)
+            y_top = min(current_y_top, y4)
+
+            if x_right > x_left and y_top > y_bottom:
+                current_x_left = x_left
+                current_x_right = x_right
+                current_y_bottom = y_bottom
+                current_y_top = y_top
+            else:
+                return 0
+
+        width = current_x_right - current_x_left
+        height = current_y_top - current_y_bottom
+        
+        return width * height
+        
+    except (ValueError, TypeError) as e:
+        if isinstance(e, (ValueError, TypeError)):
+            raise RectCorrectError(f"Ошибка в данных: {e}")
+        raise
